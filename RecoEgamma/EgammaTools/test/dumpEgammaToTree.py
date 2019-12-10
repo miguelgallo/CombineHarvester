@@ -105,41 +105,45 @@ class PhoTreeData:
 
         self.tree.Fill()
 
-oldargv = sys.argv[:]
-sys.argv = [ '-b-' ]
-ROOT.gROOT.SetBatch(True)
-sys.argv = oldargv
-ROOT.gSystem.Load("libFWCoreFWLite.so");
-ROOT.gSystem.Load("libDataFormatsFWLite.so");
-ROOT.FWLiteEnabler.enable()
+def main():
+    oldargv = sys.argv[:]
+    sys.argv = [ '-b-' ]
+    ROOT.gROOT.SetBatch(True)
+    sys.argv = oldargv
+    ROOT.gSystem.Load("libFWCoreFWLite.so");
+    ROOT.gSystem.Load("libDataFormatsFWLite.so");
+    ROOT.FWLiteEnabler.enable()
 
-parser = argparse.ArgumentParser(description='prints E/gamma pat::Electrons/Photons us')
-parser.add_argument('in_filename',help='input filename')
-parser.add_argument('out_filename',help='output filename')
-parser.add_argument('--min_pho_et','-p',default=20.,type=float,help='minimum photon et')
-parser.add_argument('--min_ele_et','-e',default=20.,type=float,help='minimum electron et')
-args = parser.parse_args()
+    parser = argparse.ArgumentParser(description='prints E/gamma pat::Electrons/Photons us')
+    parser.add_argument('in_filename',help='input filename')
+    parser.add_argument('out_filename',help='output filename')
+    parser.add_argument('--min_pho_et','-p',default=20.,type=float,help='minimum photon et')
+    parser.add_argument('--min_ele_et','-e',default=20.,type=float,help='minimum electron et')
+    args = parser.parse_args()
 
-eles, ele_label = Handle("std::vector<pat::Electron>"), "slimmedElectrons"
-phos, pho_label = Handle("std::vector<pat::Photon>"), "slimmedPhotons"
+    eles, ele_label = Handle("std::vector<pat::Electron>"), "slimmedElectrons"
+    phos, pho_label = Handle("std::vector<pat::Photon>"), "slimmedPhotons"
 
 
-out_file = ROOT.TFile(args.out_filename,"RECREATE")
-ele_tree = EleTreeData('eleTree')
-pho_tree = PhoTreeData('phoTree')
+    out_file = ROOT.TFile(args.out_filename,"RECREATE")
+    ele_tree = EleTreeData('eleTree')
+    pho_tree = PhoTreeData('phoTree')
 
-events = Events(args.in_filename)
-for event_nr,event in enumerate(events):
+    events = Events(args.in_filename)
+    for event_nr,event in enumerate(events):
+        
+        event.getByLabel(pho_label,phos)
     
-    event.getByLabel(pho_label,phos)
-    
-    for pho_nr,pho in enumerate(phos.product()):  
-        if pho.et()>=args.min_pho_et: 
-            pho_tree.fill(pho,event)
+        for pho_nr,pho in enumerate(phos.product()):  
+            if pho.et()>=args.min_pho_et: 
+                pho_tree.fill(pho,event)
 
-    event.getByLabel(ele_label,eles)
-    for ele_nr,ele in enumerate(eles.product()):
-        if ele.et()>=args.min_ele_et: 
-            ele_tree.fill(ele,event)
+        event.getByLabel(ele_label,eles)
+        for ele_nr,ele in enumerate(eles.product()):
+            if ele.et()>=args.min_ele_et: 
+                ele_tree.fill(ele,event)
+            
+    out_file.Write()
 
-out_file.Write()
+if __name__ == "__main__":
+    main()
