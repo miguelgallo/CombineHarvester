@@ -16,6 +16,8 @@ options.register('applyEPCombBug',False,options.multiplicity.singleton,options.v
 options.register('era','2017-Nov17ReReco',options.multiplicity.singleton,options.varType.string," ")
 options.register('isMC',False,options.multiplicity.singleton,options.varType.bool," ")
 options.register('unscheduled',False,options.multiplicity.singleton,options.varType.bool," ")
+options.register('nrThreads',1,options.multiplicity.singleton,options.varType.int," ")
+
 options.parseArguments()
 
 # initialize MessageLogger and output report
@@ -33,6 +35,13 @@ process.source = cms.Source("PoolSource",
                             fileNames = cms.untracked.vstring(options.inputFiles),  
                           )
 
+process.options = cms.untracked.PSet(
+    numberOfStreams = cms.untracked.uint32(options.nrThreads),
+    numberOfThreads = cms.untracked.uint32(options.nrThreads),
+    wantSummary = cms.untracked.bool(False)
+)
+
+
 def getGlobalTagName(isMC,era):
     if era=='2018-Prompt':
         if isMC: return '102X_upgrade2018_realistic_v15'
@@ -43,8 +52,11 @@ def getGlobalTagName(isMC,era):
     elif era=='2016-Legacy':
         if isMC: return '94X_mcRun2_asymptotic_v3'
         else: return '94X_dataRun2_v10'
+    elif era=='2017-UL':
+        if isMC: return '106X_mc2017_realistic_v6'
+        else: return '106X_dataRun2_v20'
     else:
-        raise RuntimeError('Error in runPostRecoEgammaTools, era {} not currently implimented. Allowed eras are 2018-Prompt 2017-Nov17ReReco 2016-Legacy'.format(era)) 
+        raise RuntimeError('Error in runPostRecoEgammaTools, era {} not currently implimented. Allowed eras are 2018-Prompt 2017-Nov17ReReco 2016-Legacy 2017-UL'.format(era)) 
     
 
 process.load("Configuration.Geometry.GeometryRecoDB_cff")
