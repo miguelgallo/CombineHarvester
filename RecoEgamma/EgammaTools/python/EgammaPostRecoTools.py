@@ -154,7 +154,10 @@ class CfgData:
             'autoAdjustParams' : True,
             'process' : None
         }
-       
+        #I hate this hack but easiest way to communicate that the preVID updator is running
+        #gets set when we know we are going to run it or not
+        self.runningPreVIDUpdator = False       
+
         if len(args)>1: 
             raise Exception('error multiple unnamed parameters pass to EgammaPostRecoTools')
         
@@ -240,6 +243,7 @@ def _setupEgammaPreVIDUpdator(eleSrc,phoSrc,cfg):
         modifiers.append(egamma9X105XUpdateModifier)
 
     if modifiers != cms.VPSet():
+        cfg.runningPreVIDUpdator = True
         if cfg.isMiniAOD:        
             modifiedEleProdName = "ModifiedElectronProducer"
             modifiedPhoProdName = "ModifiedPhotonProducer"
@@ -266,7 +270,6 @@ def _setupEgammaPreVIDUpdator(eleSrc,phoSrc,cfg):
                                                      )
                                                  )
         )
-        print getattr(process,updatedEleName).dumpPython()
         process.egammaUpdatorTask.add(getattr(process,updatedEleName))
         process.egammaUpdatorTask.add(getattr(process,updatedPhoName))
         return cms.InputTag(updatedEleName),cms.InputTag(updatedPhoName)
@@ -439,7 +442,7 @@ def _setupEgammaPostVIDUpdator(eleSrc,phoSrc,cfg):
 
    
     #we only run if the modifications are going to do something
-    if egamma_modifications != cms.VPSet():
+    if egamma_modifications != cms.VPSet() or cfg.runningPreVIDUpdator:
         process.egammaPostRecoPatUpdatorTask.add(process.slimmedElectrons)
         process.egammaPostRecoPatUpdatorTask.add(process.slimmedPhotons)
         return eleSrc,phoSrc
